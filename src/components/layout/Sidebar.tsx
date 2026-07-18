@@ -19,6 +19,8 @@ import {
   ChevronRight,
   Trophy,
   Star,
+  Gamepad2,
+  UserPlus,
 } from 'lucide-react';
 
 const navigation = [
@@ -31,6 +33,8 @@ const navigation = [
   { name: 'Simulador', href: '/simulador', icon: Play, accent: 'from-indigo-500 to-violet-500' },
   { name: 'Exportação', href: '/exportacao', icon: Printer, accent: 'from-slate-500 to-zinc-500' },
   { name: 'Configurações', href: '/configuracoes', icon: Settings, accent: 'from-gray-500 to-slate-500' },
+  { name: 'Painel do Host', href: '/jogo', icon: Gamepad2, accent: 'from-red-500 to-pink-500' },
+  { name: 'Jogar', href: '/jogar', icon: UserPlus, accent: 'from-cyan-500 to-blue-500' },
 ];
 
 export function Sidebar() {

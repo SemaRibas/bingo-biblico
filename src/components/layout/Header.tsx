@@ -5,6 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Search, Bell, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { generateRoomCode } from '@/lib/room-code';
 
 export function Header() {
   const { state, dispatch } = useApp();
@@ -15,6 +16,8 @@ export function Header() {
       id: crypto.randomUUID?.() ?? Math.random().toString(36).substring(2, 15),
       name: 'Novo Projeto',
       description: 'Descrição do projeto',
+      roomCode: generateRoomCode(),
+      hostId: crypto.randomUUID?.() ?? Math.random().toString(36).substring(2, 15),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'active' as const,

@@ -22,11 +22,20 @@ import {
 const SIZE_OPTIONS: BingoSize[] = [4, 5, 6, 7];
 
 function createEmptyCard(projectId: string, size: BingoSize, name: string): BingoCard {
+  const totalCells = size * size;
+  const freeCells = size === 5 ? 1 : 0;
+  const numbersNeeded = totalCells - freeCells;
+  const allNumbers = Array.from({ length: 200 }, (_, i) => i + 1);
+  const shuffled = allNumbers.sort(() => Math.random() - 0.5);
+  const assignedNumbers = shuffled.slice(0, numbersNeeded);
+  let numIdx = 0;
+
   const cells: BingoCell[] = [];
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
       const isFree = size === 5 && r === 2 && c === 2;
-      cells.push({ id: generateId(), cardId: '', row: r, col: c, isFree, isLocked: false });
+      const number = isFree ? 0 : assignedNumbers[numIdx++];
+      cells.push({ id: generateId(), cardId: '', row: r, col: c, number, isFree, isLocked: false });
     }
   }
   const id = generateId();

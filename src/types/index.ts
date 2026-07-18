@@ -2,6 +2,8 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  roomCode: string;
+  hostId: string;
   createdAt: string;
   updatedAt: string;
   status: 'active' | 'archived';
@@ -40,6 +42,7 @@ export interface BingoCell {
   cardId: string;
   row: number;
   col: number;
+  number: number;
   questionId?: string;
   isFree: boolean;
   isLocked: boolean;
@@ -114,6 +117,39 @@ export interface SimulationResult {
   rarityBreakdown: Record<string, number>;
   rewardBreakdown: Record<RewardType, number>;
   createdAt: string;
+}
+
+export type GameStatus = 'waiting' | 'playing' | 'finished';
+
+export interface GameState {
+  id: string;
+  projectId: string;
+  status: GameStatus;
+  drawnNumbers: number[];
+  currentNumber: number | null;
+  hostId: string;
+  startedAt: string;
+  endedAt: string | null;
+  winnerId: string | null;
+}
+
+export interface Player {
+  id: string;
+  projectId: string;
+  name: string;
+  cardId: string;
+  score: number;
+  completedCells: string[];
+  envelopes: PlayerEnvelope[];
+  joinedAt: string;
+}
+
+export interface PlayerEnvelope {
+  id: string;
+  rarityName: string;
+  rarityColor: string;
+  rewardType: RewardType;
+  openedAt: string;
 }
 
 export interface AppState {
