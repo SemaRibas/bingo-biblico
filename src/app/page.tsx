@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
+import type { Project } from '@/types';
 import {
   HelpCircle,
   LayoutGrid,
@@ -11,11 +12,17 @@ import {
   AlertTriangle,
   TrendingUp,
   FolderOpen,
+  Edit3,
+  Trash2,
+  X,
+  Check,
 } from 'lucide-react';
 import { REWARD_TYPE_LABELS } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { state, dispatch } = useApp();
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', description: '' });
 
   const stats = [
     {
@@ -200,48 +207,122 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {state.projects.slice(0, 5).map((project) => (
-                  <div
-                    key={project.id}
-                    className="flex items-center justify-between rounded-xl p-3 transition-all duration-200 cursor-pointer hover:shadow-sm"
-                    style={{
-                      background: 'var(--muted)',
-                    }}
-                    onClick={() =>
-                      dispatch({
-                        type: 'SET_CURRENT_PROJECT',
-                        payload: project,
-                      })
-                    }
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                        style={{ background: 'var(--accent-gradient)' }}
-                      >
-                        {project.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                          {project.name}
-                        </p>
-                        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                          {project.description}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        project.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'text-gray-500'
-                      }`}
-                      style={project.status !== 'active' ? { background: 'var(--muted)' } : undefined}
+                {state.projects.slice(0, 5).map((project) => {
+                  const isEditing = editingProjectId === project.id;
+                  return (
+                    <div
+                      key={project.id}
+                      className="group flex items-center justify-between rounded-xl p-3 transition-all duration-200 hover:shadow-sm"
+                      style={{ background: 'var(--muted)' }}
                     >
-                      {project.status === 'active' ? 'Ativo' : 'Arquivado'}
-                    </span>
-                  </div>
-                ))}
+                      {isEditing ? (
+                        <div className="flex-1 flex items-center gap-3">
+                          <div
+                            className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+                            style={{ background: 'var(--accent-gradient)' }}
+                          >
+                            {editForm.name.charAt(0).toUpperCase() || '?'}
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <input
+                              value={editForm.name}
+                              onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                              className="w-full rounded-lg border px-2.5 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                              style={{ background: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                              autoFocus
+                            />
+                            <input
+                              value={editForm.description}
+                              onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                              className="w-full rounded-lg border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                              style={{ background: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                              placeholder="Descrição"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => {
+                                if (editForm.name.trim()) {
+                                  dispatch({ type: 'UPDATE_PROJECT', payload: { ...project, name: editForm.name.trim(), description: editForm.description.trim(), updatedAt: new Date().toISOString() } });
+                                }
+                                setEditingProjectId(null);
+                              }}
+                              className="rounded-lg p-1.5 hover:bg-emerald-500/10 text-emerald-500 transition-colors"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingProjectId(null)}
+                              className="rounded-lg p-1.5 hover:bg-[var(--card)] transition-colors"
+                              style={{ color: 'var(--muted-foreground)' }}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                            onClick={() => dispatch({ type: 'SET_CURRENT_PROJECT', payload: project })}
+                          >
+                            <div
+                              className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                              style={{ background: 'var(--accent-gradient)' }}
+                            >
+                              {project.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                                {project.name}
+                              </p>
+                              <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                                {project.description}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                project.status === 'active'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                  : 'text-gray-500'
+                              }`}
+                              style={project.status !== 'active' ? { background: 'var(--muted)' } : undefined}
+                            >
+                              {project.status === 'active' ? 'Ativo' : 'Arquivado'}
+                            </span>
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingProjectId(project.id);
+                                  setEditForm({ name: project.name, description: project.description });
+                                }}
+                                className="rounded-lg p-1.5 hover:bg-[var(--card)] transition-colors"
+                                style={{ color: 'var(--muted-foreground)' }}
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Excluir permanentemente o projeto "${project.name}"? Esta ação não pode ser desfeita.`)) {
+                                    dispatch({ type: 'DELETE_PROJECT', payload: project.id });
+                                  }
+                                }}
+                                className="rounded-lg p-1.5 hover:bg-destructive/10 transition-colors"
+                                style={{ color: 'var(--muted-foreground)' }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
