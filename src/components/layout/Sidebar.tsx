@@ -17,18 +17,19 @@ import {
   ChevronLeft,
   ChevronRight,
   Trophy,
+  Star,
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Banco de Perguntas', href: '/perguntas', icon: HelpCircle },
-  { name: 'Cartelas de Bingo', href: '/cartelas', icon: LayoutGrid },
-  { name: 'Mapeamento', href: '/mapeamento', icon: ArrowLeftRight },
-  { name: 'Envelopes Surpresa', href: '/envelopes', icon: Mail },
-  { name: 'Raridades', href: '/raridades', icon: Sparkles },
-  { name: 'Simulador', href: '/simulador', icon: Play },
-  { name: 'Exportação', href: '/exportacao', icon: Printer },
-  { name: 'Configurações', href: '/configuracoes', icon: Settings },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, accent: 'from-violet-500 to-purple-600' },
+  { name: 'Banco de Perguntas', href: '/perguntas', icon: HelpCircle, accent: 'from-blue-500 to-cyan-500' },
+  { name: 'Cartelas de Bingo', href: '/cartelas', icon: LayoutGrid, accent: 'from-emerald-500 to-teal-500' },
+  { name: 'Mapeamento', href: '/mapeamento', icon: ArrowLeftRight, accent: 'from-orange-500 to-amber-500' },
+  { name: 'Envelopes Surpresa', href: '/envelopes', icon: Mail, accent: 'from-pink-500 to-rose-500' },
+  { name: 'Raridades', href: '/raridades', icon: Sparkles, accent: 'from-yellow-400 to-amber-500' },
+  { name: 'Simulador', href: '/simulador', icon: Play, accent: 'from-indigo-500 to-violet-500' },
+  { name: 'Exportação', href: '/exportacao', icon: Printer, accent: 'from-slate-500 to-zinc-500' },
+  { name: 'Configurações', href: '/configuracoes', icon: Settings, accent: 'from-gray-500 to-slate-500' },
 ];
 
 export function Sidebar() {
@@ -38,18 +39,40 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen border-r border-border bg-card transition-all duration-300',
-        collapsed ? 'w-[68px]' : 'w-64'
+        'fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out',
+        collapsed ? 'w-[72px]' : 'w-[260px]'
       )}
     >
-      <div className="flex h-full flex-col">
+      <div
+        className="h-full flex flex-col rounded-r-2xl overflow-hidden"
+        style={{
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRight: '1px solid var(--glass-border)',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.06)',
+        }}
+      >
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Trophy className="h-4 w-4" />
+        <div className={cn(
+          'flex items-center h-16 shrink-0 border-b',
+          collapsed ? 'justify-center px-2' : 'gap-3 px-5'
+        )} style={{ borderColor: 'var(--border)' }}>
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-md"
+            style={{ background: 'var(--accent-gradient)' }}
+          >
+            <Trophy className="h-4.5 w-4.5" />
           </div>
           {!collapsed && (
-            <span className="text-sm font-semibold tracking-tight">Bingo Bíblico</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+                Bingo Bíblico
+              </span>
+              <span className="text-[10px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
+                Painel Admin
+              </span>
+            </div>
           )}
         </div>
 
@@ -63,15 +86,30 @@ export function Sidebar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'sidebar-active text-white shadow-md'
+                        : 'hover:bg-[var(--accent)]'
                     )}
+                    style={isActive ? {
+                      background: 'var(--accent-gradient)',
+                      color: 'var(--primary-foreground)',
+                    } : {
+                      color: 'var(--muted-foreground)',
+                    }}
                     title={collapsed ? item.name : undefined}
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.currentTarget.style.color = 'var(--foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.currentTarget.style.color = 'var(--muted-foreground)';
+                    }}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" />
+                    <item.icon className="h-4.5 w-4.5 shrink-0" />
                     {!collapsed && <span>{item.name}</span>}
+                    {isActive && !collapsed && (
+                      <Star className="h-3 w-3 ml-auto fill-white/40 text-white/40" />
+                    )}
                   </Link>
                 </li>
               );
@@ -80,15 +118,22 @@ export function Sidebar() {
         </nav>
 
         {/* Collapse button */}
-        <div className="border-t border-border p-3">
+        <div className="shrink-0 p-3 border-t" style={{ borderColor: 'var(--border)' }}>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="flex w-full items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className={cn(
+              'flex w-full items-center justify-center rounded-xl py-2.5 transition-all duration-200',
+              'hover:bg-[var(--accent)]'
+            )}
+            style={{ color: 'var(--muted-foreground)' }}
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-xs">
+                <ChevronLeft className="h-4 w-4" />
+                <span>Recolher</span>
+              </div>
             )}
           </button>
         </div>

@@ -1,35 +1,41 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
 
-  useEffect(() => {
-    const saved = localStorage.getItem('bingo-theme') as 'light' | 'dark' | null;
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.classList.toggle('dark', saved === 'dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    localStorage.setItem('bingo-theme', next);
-    document.documentElement.classList.toggle('dark', next === 'dark');
-  };
+  const toggle = () => setTheme(isDark ? 'light' : 'dark');
 
   return (
     <button
       onClick={toggle}
-      className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-      title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+      className="relative rounded-xl p-2.5 transition-all duration-300 hover:scale-110 active:scale-95"
+      style={{
+        color: 'var(--muted-foreground)',
+        background: 'var(--muted)',
+      }}
+      title={isDark ? 'Modo claro' : 'Modo escuro'}
     >
-      {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      <div className="relative h-4 w-4">
+        <Sun
+          className="absolute inset-0 h-4 w-4 transition-all duration-300"
+          style={{
+            opacity: isDark ? 1 : 0,
+            transform: isDark ? 'rotate(0deg) scale(1)' : 'rotate(90deg) scale(0.5)',
+          }}
+        />
+        <Moon
+          className="absolute inset-0 h-4 w-4 transition-all duration-300"
+          style={{
+            opacity: isDark ? 0 : 1,
+            transform: isDark ? 'rotate(-90deg) scale(0.5)' : 'rotate(0deg) scale(1)',
+          }}
+        />
+      </div>
     </button>
   );
 }

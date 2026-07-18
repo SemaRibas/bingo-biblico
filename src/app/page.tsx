@@ -22,29 +22,29 @@ export default function DashboardPage() {
       label: 'Perguntas Cadastradas',
       value: state.questions.length,
       icon: HelpCircle,
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10',
+      className: 'stat-card-blue',
+      iconColor: 'text-blue-500',
     },
     {
       label: 'Cartelas Geradas',
       value: state.cards.length,
       icon: LayoutGrid,
-      color: 'text-emerald-500',
-      bg: 'bg-emerald-500/10',
+      className: 'stat-card-emerald',
+      iconColor: 'text-emerald-500',
     },
     {
       label: 'Envelopes Cadastrados',
       value: state.envelopes.length,
       icon: Mail,
-      color: 'text-purple-500',
-      bg: 'bg-purple-500/10',
+      className: 'stat-card-purple',
+      iconColor: 'text-purple-500',
     },
     {
       label: 'Raridades Ativas',
       value: state.rarities.filter((r) => r.active).length,
       icon: Sparkles,
-      color: 'text-amber-500',
-      bg: 'bg-amber-500/10',
+      className: 'stat-card-amber',
+      iconColor: 'text-amber-500',
     },
   ];
 
@@ -81,45 +81,77 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
-          <p className="text-sm text-muted-foreground">
+        {/* Header */}
+        <div className="animate-fade-in">
+          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>
+            Dashboard
+          </h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
             Visão geral do seu projeto de Bingo Bíblico
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">
-                    {stat.value}
-                  </p>
-                </div>
-                <div className={`rounded-lg p-2.5 ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+        {state.loading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="card-base rounded-xl p-5 animate-fade-in" style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'both' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="h-3 w-24 rounded skeleton" />
+                    <div className="h-8 w-16 rounded skeleton mt-3" />
+                  </div>
+                  <div className="h-11 w-11 rounded-xl skeleton" />
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`card-base rounded-xl p-5 ${stat.className} animate-fade-in`}
+                style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'both' }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+                      {stat.label}
+                    </p>
+                    <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`rounded-xl p-3 ${stat.iconColor}`} style={{ background: 'var(--muted)' }}>
+                    <stat.icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Alerts */}
         {alerts.length > 0 && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-            <div className="flex items-center gap-2 text-amber-500 mb-2">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-sm font-medium">Alertas de Inconsistência</span>
+          <div
+            className="rounded-xl border p-4 animate-scale-in"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(245, 158, 11, 0.02))',
+              borderColor: 'rgba(245, 158, 11, 0.2)',
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-lg bg-amber-500/10 p-1.5">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              </div>
+              <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                Alertas de Inconsistência
+              </span>
             </div>
-            <ul className="space-y-1">
+            <ul className="space-y-1 ml-9">
               {alerts.map((alert, i) => (
-                <li key={i} className="text-sm text-muted-foreground">
+                <li key={i} className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
                   {alert}
                 </li>
               ))}
@@ -127,82 +159,143 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Recent Projects */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">
-              Projetos Recentes
-            </h3>
-            <FolderOpen className="h-4 w-4 text-muted-foreground" />
-          </div>
-          {state.projects.length === 0 ? (
-            <div className="py-8 text-center">
-              <TrendingUp className="mx-auto h-8 w-8 text-muted-foreground/50" />
-              <p className="mt-2 text-sm text-muted-foreground">
-                Nenhum projeto ainda. Crie seu primeiro projeto!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {state.projects.slice(0, 5).map((project) => (
-                <div
-                  key={project.id}
-                  className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() =>
-                    dispatch({
-                      type: 'SET_CURRENT_PROJECT',
-                      payload: project,
-                    })
-                  }
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {project.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {project.description}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      project.status === 'active'
-                        ? 'bg-emerald-500/10 text-emerald-500'
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {project.status === 'active' ? 'Ativo' : 'Arquivado'}
-                  </span>
+        {/* Projects + Categories */}
+        {state.loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="card-base rounded-xl p-5 lg:col-span-2">
+              <div className="h-4 w-32 rounded skeleton mb-4" />
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-xl mb-2">
+                  <div className="h-8 w-8 rounded-lg skeleton" />
+                  <div className="flex-1"><div className="h-3 w-32 rounded skeleton mb-1.5" /><div className="h-2.5 w-48 rounded skeleton" /></div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+            <div className="card-base rounded-xl p-5">
+              <div className="h-4 w-40 rounded skeleton mb-4" />
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="mb-3">
+                  <div className="flex justify-between mb-1"><div className="h-2.5 w-24 rounded skeleton" /><div className="h-2.5 w-6 rounded skeleton" /></div>
+                  <div className="h-1.5 rounded-full skeleton" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Recent Projects */}
+          <div className="card-base rounded-xl p-5 lg:col-span-2 animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold" style={{ color: 'var(--foreground)' }}>
+                Projetos Recentes
+              </h3>
+              <FolderOpen className="h-4 w-4" style={{ color: 'var(--muted-foreground)' }} />
+            </div>
+            {state.projects.length === 0 ? (
+              <div className="py-8 text-center">
+                <TrendingUp className="mx-auto h-8 w-8 opacity-30" style={{ color: 'var(--muted-foreground)' }} />
+                <p className="mt-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                  Nenhum projeto ainda. Crie seu primeiro projeto!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {state.projects.slice(0, 5).map((project) => (
+                  <div
+                    key={project.id}
+                    className="flex items-center justify-between rounded-xl p-3 transition-all duration-200 cursor-pointer hover:shadow-sm"
+                    style={{
+                      background: 'var(--muted)',
+                    }}
+                    onClick={() =>
+                      dispatch({
+                        type: 'SET_CURRENT_PROJECT',
+                        payload: project,
+                      })
+                    }
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                        style={{ background: 'var(--accent-gradient)' }}
+                      >
+                        {project.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                          {project.name}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                          {project.description}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        project.status === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'text-gray-500'
+                      }`}
+                      style={project.status !== 'active' ? { background: 'var(--muted)' } : undefined}
+                    >
+                      {project.status === 'active' ? 'Ativo' : 'Arquivado'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Quick Stats by Category */}
-        {state.questions.length > 0 && (
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">
+          {/* Questions by Category */}
+          <div className="card-base rounded-xl p-5 animate-fade-in" style={{ animationDelay: '300ms', animationFillMode: 'both' }}>
+            <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--foreground)' }}>
               Perguntas por Categoria
             </h3>
-            <div className="space-y-2">
-              {Object.entries(
-                state.questions.reduce(
-                  (acc, q) => {
-                    acc[q.category] = (acc[q.category] || 0) + 1;
-                    return acc;
-                  },
-                  {} as Record<string, number>
+            {state.questions.length > 0 ? (
+              <div className="space-y-3">
+                {Object.entries(
+                  state.questions.reduce(
+                    (acc, q) => {
+                      acc[q.category] = (acc[q.category] || 0) + 1;
+                      return acc;
+                    },
+                    {} as Record<string, number>
+                  )
                 )
-              ).map(([cat, count]) => (
-                <div key={cat} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground capitalize">
-                    {cat.replace(/_/g, ' ')}
-                  </span>
-                  <span className="font-medium text-foreground">{count}</span>
-                </div>
-              ))}
-            </div>
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([cat, count]) => {
+                    const total = state.questions.length;
+                    const pct = (count / total) * 100;
+                    return (
+                      <div key={cat}>
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="capitalize font-medium" style={{ color: 'var(--foreground)' }}>
+                            {cat.replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-xs font-semibold" style={{ color: 'var(--muted-foreground)' }}>
+                            {count}
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--muted)' }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${pct}%`,
+                              background: 'var(--accent-gradient)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            ) : (
+              <p className="text-sm text-center py-6" style={{ color: 'var(--muted-foreground)' }}>
+                Nenhuma pergunta cadastrada
+              </p>
+            )}
           </div>
+        </div>
         )}
       </div>
     </AppLayout>

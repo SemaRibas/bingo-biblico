@@ -1,314 +1,154 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useApp } from '@/contexts/AppContext';
-import type { SimulationResult, RewardType } from '@/types';
-import { generateId, REWARD_TYPE_LABELS } from '@/lib/utils';
-import { Play, BarChart3, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import type { RewardType } from '@/types';
+
+const REWARD_TYPE_LABELS: Record<string, string> = { versiculo: 'Versículo', doce: 'Doce', bonus: 'Bônus', premio: 'Prêmio', nova_tentativa: 'Nova Tentativa', vazio: 'Vazio', desafio_extra: 'Desafio Extra' };
 
 export default function SimuladorPage() {
-  const { state, dispatch, projectId } = useApp();
-  const [simCount, setSimCount] = useState(10);
-  const [results, setResults] = useState<SimulationResult | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
+  const { state } = useApp();
+  const [numSimulations, setNumSimulations] = useState(20);
+  const [results, setResults] = useState<Array<{ index: number; rarity: string; rewardType: string; color: string }>>([]);
+  const [isSimulating, setIsSimulating] = useState(false);
 
-  const projectRarities = useMemo(
-    () => state.rarities.filter((r) => r.projectId === projectId && r.active),
-    [state.rarities, projectId]
-  );
+  const projectRarities = useMemo(() => state.rarities.filter((r) => r.projectId === state.currentProject?.id && r.active), [state.rarities, state.currentProject]);
+  const projectEnvelopes = useMemo(() => state.envelopes.filter((e) => e.projectId === state.currentProject?.id), [state.envelopes, state.currentProject]);
 
-  const projectEnvelopes = useMemo(
-    () => state.envelopes.filter((e) => e.projectId === projectId && e.status === 'active'),
-    [state.envelopes, projectId]
-  );
-
-  const runSimulation = () => {
-    setIsRunning(true);
+  const simulate = useCallback(() => {
+    setIsSimulating(true);
+    setResults([]);
 
     setTimeout(() => {
-      const rarityBreakdown: Record<string, number> = {};
-      const rewardBreakdown: Record<string, number> = {};
+      const newResults: Array<{ index: number; rarity: string; rewardType: string; color: string }> = [];
 
-      const rewardTypes = ['premio', 'versiculo', 'doce', 'bonus', 'nova_tentativa', 'vazio', 'desafio_extra'] as const;
-      rewardTypes.forEach((type) => {
-        rewardBreakdown[type] = 0;
-      });
-
-      // Build weighted pool based on rarity distributions
-      const pool: { rarityId: string; rarityName: string; rewardType: RewardType }[] = [];
-
-      projectRarities.forEach((rarity) => {
-        rarity.distributions.forEach((dist) => {
-          const count = Math.round((dist.percentage / 100) * simCount * (1 / projectRarities.length));
-          for (let i = 0; i < count; i++) {
-            pool.push({
-              rarityId: rarity.id,
-              rarityName: rarity.name,
-              rewardType: dist.rewardType,
-            });
-          }
-        });
-      });
-
-      // If pool is smaller than simCount, fill with random
-      while (pool.length < simCount) {
-        const randomRarity = projectRarities[Math.floor(Math.random() * projectRarities.length)];
-        if (randomRarity) {
-          const randomDist = randomRarity.distributions[Math.floor(Math.random() * randomRarity.distributions.length)];
-          if (randomDist) {
-            pool.push({
-              rarityId: randomRarity.id,
-              rarityName: randomRarity.name,
-              rewardType: randomDist.rewardType,
-            });
-          }
+      for (let i = 0; i < numSimulations; i++) {
+        let rarityIdx = 0;
+        if (projectRarities.length > 1) {
+          rarityIdx = Math.floor(Math.random() * projectRarities.length);
         }
+        const rarity = projectRarities[rarityIdx];
+        if (!rarity) continue;
+
+        const dist = rarity.distributions;
+        const totalPct = dist.reduce((s, d) => s + d.percentage, 0);
+        let roll = Math.random() * totalPct;
+        let selectedType: RewardType = dist[0]?.rewardType || 'versiculo';
+        for (const d of dist) {
+          roll -= d.percentage;
+          if (roll <= 0) { selectedType = d.rewardType; break; }
+        }
+
+        newResults.push({ index: i + 1, rarity: rarity.name, rewardType: selectedType, color: rarity.color });
       }
 
-      // Draw from pool
-      for (let i = 0; i < simCount; i++) {
-        const idx = Math.floor(Math.random() * pool.length);
-        const item = pool[idx] || pool[0];
-        if (item) {
-          rarityBreakdown[item.rarityName] = (rarityBreakdown[item.rarityName] || 0) + 1;
-          rewardBreakdown[item.rewardType] = (rewardBreakdown[item.rewardType] || 0) + 1;
-        }
-      }
+      setResults(newResults);
+      setIsSimulating(false);
+    }, 800);
+  }, [numSimulations, projectRarities]);
 
-      const result: SimulationResult = {
-        id: generateId(),
-        projectId: projectId || '',
-        totalOpened: simCount,
-        rarityBreakdown,
-        rewardBreakdown: rewardBreakdown as Record<RewardType, number>,
-        createdAt: new Date().toISOString(),
-      };
+  const stats = useMemo(() => {
+    if (results.length === 0) return null;
+    const byRarity: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+    results.forEach((r) => { byRarity[r.rarity] = (byRarity[r.rarity] || 0) + 1; byType[r.rewardType] = (byType[r.rewardType] || 0) + 1; });
+    return { byRarity, byType };
+  }, [results]);
 
-      setResults(result);
-      dispatch({ type: 'ADD_SIMULATION', payload: result });
-      setIsRunning(false);
-    }, 500);
-  };
-
-  const alerts: string[] = [];
-  if (results) {
-    Object.entries(results.rarityBreakdown).forEach(([name, count]) => {
-      const pct = (count / results.totalOpened) * 100;
-      const rarity = projectRarities.find((r) => r.name === name);
-      if (rarity) {
-        const expectedPct = 100 / projectRarities.length;
-        if (Math.abs(pct - expectedPct) > 20) {
-          alerts.push(`Raridade "${name}" teve ${pct.toFixed(1)}% (esperado ~${expectedPct.toFixed(1)}%)`);
-        }
-      }
-    });
-  }
-
-  const maxReward = results
-    ? Math.max(...Object.values(results.rewardBreakdown))
-    : 1;
+  const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Simulador</h2>
-          <p className="text-sm text-muted-foreground">
-            Teste a distribuição de raridades e recompensas
-          </p>
+        <div className="animate-fade-in">
+          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Simulador</h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Teste a distribuição simulando aberturas de envelopes</p>
         </div>
 
-        {/* Controls */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex flex-wrap items-end gap-4">
+        <div className="card-base rounded-xl p-5 animate-fade-in" style={{ animationDelay: '40ms', animationFillMode: 'both' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium">Quantidade de Simulações</label>
-              <div className="flex items-center gap-2 mt-1">
-                {[10, 50, 100, 1000].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setSimCount(n)}
-                    className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                      simCount === n
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border hover:bg-muted'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Simulações</label>
+              <input type="number" min={1} max={200} value={numSimulations} onChange={(e) => setNumSimulations(parseInt(e.target.value) || 1)} className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20" style={inputStyle} />
             </div>
-            <button
-              onClick={runSimulation}
-              disabled={isRunning || projectRarities.length === 0}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {isRunning ? (
-                <RotateCcw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-              {isRunning ? 'Executando...' : 'Executar Simulação'}
-            </button>
+            <div>
+              <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Envelopes disponíveis</label>
+              <p className="mt-1.5 text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{projectEnvelopes.length}</p>
+            </div>
+            <div className="flex items-end">
+              <button onClick={simulate} disabled={isSimulating || projectRarities.length === 0} className="btn-glow w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50" style={{ background: 'var(--accent-gradient)' }}>
+                {isSimulating ? 'Simulando...' : 'Simular Aberturas'}
+              </button>
+            </div>
           </div>
-          {projectRarities.length === 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Configure raridades antes de simular
-            </p>
-          )}
         </div>
 
-        {/* Results */}
-        {results && (
-          <div className="space-y-4">
-            {/* Alerts */}
-            {alerts.length > 0 && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-                <div className="flex items-center gap-2 text-amber-500 mb-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Alertas de Desequilíbrio</span>
-                </div>
-                <ul className="space-y-1">
-                  {alerts.map((alert, i) => (
-                    <li key={i} className="text-sm text-muted-foreground">{alert}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Rarity Breakdown */}
-              <div className="rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold">Distribuição por Raridade</h3>
-                </div>
-                <div className="space-y-3">
-                  {Object.entries(results.rarityBreakdown)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([name, count]) => {
-                      const pct = (count / results.totalOpened) * 100;
-                      const rarity = projectRarities.find((r) => r.name === name);
-                      return (
-                        <div key={name}>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{ background: rarity?.color || '#9CA3AF' }}
-                              />
-                              {name}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {count} ({pct.toFixed(1)}%)
-                            </span>
-                          </div>
-                          <div className="h-2 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{
-                                width: `${pct}%`,
-                                background: rarity?.color || '#9CA3AF',
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              {/* Reward Breakdown */}
-              <div className="rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold">Distribuição por Tipo</h3>
-                </div>
-                <div className="space-y-3">
-                  {Object.entries(results.rewardBreakdown)
-                    .filter(([, count]) => count > 0)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([type, count]) => {
-                      const pct = (count / results.totalOpened) * 100;
-                      return (
-                        <div key={type}>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>{REWARD_TYPE_LABELS[type] || type}</span>
-                            <span className="text-muted-foreground">
-                              {count} ({pct.toFixed(1)}%)
-                            </span>
-                          </div>
-                          <div className="h-2 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-primary transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-sm font-semibold mb-3">Resumo</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{results.totalOpened}</p>
-                  <p className="text-xs text-muted-foreground">Total Abertos</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{Object.keys(results.rarityBreakdown).length}</p>
-                  <p className="text-xs text-muted-foreground">Raridades Sorteadas</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{Object.keys(results.rewardBreakdown).filter((k) => results.rewardBreakdown[k as RewardType] > 0).length}</p>
-                  <p className="text-xs text-muted-foreground">Tipos de Recompensa</p>
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${alerts.length > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                    {alerts.length > 0 ? alerts.length : '✓'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {alerts.length > 0 ? 'Alertas' : 'Balanceado'}
-                  </p>
-                </div>
+        {isSimulating && (
+          <div className="flex justify-center py-12 animate-fade-in">
+            <div className="relative">
+              <div className="h-14 w-14 rounded-2xl skeleton" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-primary animate-pulse" />
               </div>
             </div>
           </div>
         )}
 
-        {/* Previous Simulations */}
-        {state.simulations.filter((s) => s.projectId === projectId).length > 1 && (
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h3 className="text-sm font-semibold mb-3">Simulações Anteriores</h3>
-            <div className="space-y-2">
-              {state.simulations
-                .filter((s) => s.projectId === projectId)
-                .slice(-5)
-                .reverse()
-                .map((sim) => (
-                  <div key={sim.id} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
-                    <div>
-                      <span className="font-medium">{sim.totalOpened} aberturas</span>
-                      <span className="text-muted-foreground ml-2">
-                        {new Date(sim.createdAt).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      {Object.entries(sim.rarityBreakdown).map(([name, count]) => (
-                        <span key={name} className="text-xs text-muted-foreground">
-                          {name}: {count}
-                        </span>
-                      ))}
+        {results.length > 0 && !isSimulating && (
+          <div className="space-y-6 animate-fade-in">
+            {stats && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="card-base rounded-xl p-4">
+                  <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--foreground)' }}>Por Raridade</h4>
+                  <div className="space-y-2">
+                    {Object.entries(stats.byRarity).sort((a, b) => b[1] - a[1]).map(([name, count]) => {
+                      const rarity = projectRarities.find((r) => r.name === name);
+                      return (
+                        <div key={name}>
+                          <div className="flex justify-between text-xs mb-1"><span style={{ color: 'var(--foreground)' }}>{name}</span><span style={{ color: 'var(--muted-foreground)' }}>{count} ({Math.round((count / results.length) * 100)}%)</span></div>
+                          <div className="h-1.5 rounded-full" style={{ background: 'var(--muted)' }}><div className="h-full rounded-full" style={{ width: `${(count / results.length) * 100}%`, background: rarity?.color || '#818cf8' }} /></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="card-base rounded-xl p-4">
+                  <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--foreground)' }}>Por Tipo de Recompensa</h4>
+                  <div className="space-y-2">
+                    {Object.entries(stats.byType).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
+                      <div key={type}>
+                        <div className="flex justify-between text-xs mb-1"><span style={{ color: 'var(--foreground)' }}>{REWARD_TYPE_LABELS[type] || type}</span><span style={{ color: 'var(--muted-foreground)' }}>{count} ({Math.round((count / results.length) * 100)}%)</span></div>
+                        <div className="h-1.5 rounded-full" style={{ background: 'var(--muted)' }}><div className="h-full rounded-full bg-primary" style={{ width: `${(count / results.length) * 100}%` }} /></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="card-base rounded-xl p-4">
+              <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--foreground)' }}>Resultados Individuais</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {results.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-xl border p-2.5" style={{ borderColor: 'var(--border)' }}>
+                    <div className="h-5 w-5 rounded-md flex items-center justify-center" style={{ background: r.color }}><Sparkles className="h-3 w-3 text-white" /></div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold" style={{ color: 'var(--foreground)' }}>#{r.index}</p>
+                      <p className="text-[10px] truncate" style={{ color: 'var(--muted-foreground)' }}>{REWARD_TYPE_LABELS[r.rewardType] || r.rewardType}</p>
                     </div>
                   </div>
                 ))}
+              </div>
             </div>
+          </div>
+        )}
+
+        {results.length === 0 && !isSimulating && (
+          <div className="card-base rounded-xl py-16 text-center animate-fade-in">
+            <Sparkles className="mx-auto h-12 w-12 opacity-20" style={{ color: 'var(--muted-foreground)' }} />
+            <p className="mt-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>{projectRarities.length === 0 ? 'Crie raridades primeiro' : 'Clique em Simular para testar'}</p>
           </div>
         )}
       </div>

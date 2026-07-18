@@ -8,15 +8,15 @@ import { generateId, CATEGORY_LABELS, DIFFICULTY_LABELS } from '@/lib/utils';
 import {
   Plus,
   Search,
-  Filter,
   Edit3,
   Trash2,
   Copy,
   Check,
   X,
-  Download,
   Upload,
-  Tag,
+  HelpCircle,
+  FileText,
+  Wand2,
 } from 'lucide-react';
 
 const EMPTY_QUESTION: Omit<BibleQuestion, 'id' | 'createdAt' | 'updatedAt' | 'linkedCells'> = {
@@ -46,6 +46,9 @@ export default function PerguntasPage() {
   const [tagInput, setTagInput] = useState('');
   const [sortField, setSortField] = useState<'question' | 'category' | 'difficulty' | 'status'>('question');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [showBatchImport, setShowBatchImport] = useState(false);
+  const [batchText, setBatchText] = useState('');
+  const [batchPreview, setBatchPreview] = useState<Array<{ question: string; answer: string; category: string; difficulty: string; autoDetected: boolean }>>([]);
 
   const filtered = useMemo(() => {
     let items = state.questions.filter((q) => q.projectId === projectId);
@@ -161,72 +164,130 @@ export default function PerguntasPage() {
   const addTag = (target: 'form' | 'edit', value: string) => {
     if (!value.trim()) return;
     if (target === 'form') {
-      setFormData((prev) => ({
-        ...prev,
-        tags: [...prev.tags, value.trim()],
-      }));
+      setFormData((prev) => ({ ...prev, tags: [...prev.tags, value.trim()] }));
     } else {
-      setEditForm((prev) => ({
-        ...prev,
-        tags: [...(prev.tags || []), value.trim()],
-      }));
+      setEditForm((prev) => ({ ...prev, tags: [...(prev.tags || []), value.trim()] }));
     }
     setTagInput('');
   };
 
   const removeTag = (target: 'form' | 'edit', index: number) => {
     if (target === 'form') {
-      setFormData((prev) => ({
-        ...prev,
-        tags: prev.tags.filter((_, i) => i !== index),
-      }));
+      setFormData((prev) => ({ ...prev, tags: prev.tags.filter((_, i) => i !== index) }));
     } else {
-      setEditForm((prev) => ({
-        ...prev,
-        tags: (prev.tags || []).filter((_, i) => i !== index),
-      }));
+      setEditForm((prev) => ({ ...prev, tags: (prev.tags || []).filter((_, i) => i !== index) }));
     }
   };
 
   const toggleSort = (field: typeof sortField) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDir('asc');
-    }
+    else { setSortField(field); setSortDir('asc'); }
   };
 
   const SortIcon = ({ field }: { field: typeof sortField }) => (
-    <span className="ml-1 text-xs">
+    <span className="ml-1 text-[10px]">
       {sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
     </span>
   );
 
+  const autoDetectCategory = (text: string): QuestionCategory => {
+    const lower = text.toLowerCase();
+    if (/mateus|lucas|marcos|joão|evangelho|jesus|cristo/.test(lower)) return 'evangelhos';
+    if (/gênesis|êxodo|levítico|números|deuteronômio|moisés|abraão|israel|antigo/.test(lower)) return 'antigo_testamento';
+    if (/paulo|romanoss|coríntios|efésios|filipenses|colossenses|cartas|epístolas/.test(lower)) return 'cartas';
+    if (/profeta|isaías|jeremias|ezequiel|daniel|amós|oseias/.test(lower)) return 'profetas';
+    if (/milagre|curou|ressuscitou|multiplicou|transformou/.test(lower)) return 'milagres';
+    if (/adão|eva|noé|davi|abraão|ismael|jacob|josé|pedro|paulo/.test(lower)) return 'personagens';
+    if (/apocalipse|revelação|nova criatura|céu|inferno|paraiso/.test(lower)) return 'novo_testamento';
+    return 'antigo_testamento';
+  };
+
+  const autoDetectDifficulty = (text: string): Difficulty => {
+    const lower = text.toLowerCase();
+    const wordCount = text.split(/\s+/).length;
+    if (wordCount <= 5 || /fácil|quem|qual|onde/.test(lower)) return 'facil';
+    if (wordCount >= 12 || /explique|descreva|comparar|diferença/.test(lower)) return 'dificil';
+    return 'medio';
+  };
+
+  const parseBatchText = () => {
+    const lines = batchText.split('\n').filter((l) => l.trim());
+    const parsed = lines.map((line) => {
+      const parts = line.split(/[|\t;]/).map((p) => p.trim());
+      const question = parts[0] || '';
+      const answer = parts[1] || '';
+      const category = parts[2] ? (Object.keys(CATEGORY_LABELS).includes(parts[2]) ? parts[2] : autoDetectCategory(question)) : autoDetectCategory(question);
+      const difficulty = parts[3] ? (Object.keys(DIFFICULTY_LABELS).includes(parts[3]) ? parts[3] : autoDetectDifficulty(question)) : autoDetectDifficulty(question);
+      const autoDetected = !parts[2] || !Object.keys(CATEGORY_LABELS).includes(parts[2]);
+      return { question, answer, category, difficulty, autoDetected };
+    }).filter((p) => p.question && p.answer);
+    setBatchPreview(parsed);
+  };
+
+  const handleBatchImport = () => {
+    batchPreview.forEach((item) => {
+      const now = new Date().toISOString();
+      const q: BibleQuestion = {
+        id: generateId(),
+        projectId: projectId || '',
+        question: item.question,
+        correctAnswer: item.answer,
+        hint: '',
+        category: item.category as QuestionCategory,
+        difficulty: item.difficulty as Difficulty,
+        tags: [],
+        status: 'active',
+        notes: '',
+        biblicalReference: '',
+        linkedCells: [],
+        createdAt: now,
+        updatedAt: now,
+      };
+      dispatch({ type: 'ADD_QUESTION', payload: q });
+    });
+    setShowBatchImport(false);
+    setBatchText('');
+    setBatchPreview([]);
+  };
+
+  const inputStyle = {
+    background: 'var(--muted)',
+    borderColor: 'var(--border)',
+    color: 'var(--foreground)',
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between animate-fade-in">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Banco de Perguntas</h2>
-            <p className="text-sm text-muted-foreground">
-              {state.questions.filter((q) => q.projectId === projectId).length} pergunta(s)
-              cadastrada(s)
+            <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Banco de Perguntas</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
+              {state.questions.filter((q) => q.projectId === projectId).length} pergunta(s) cadastrada(s)
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted transition-colors">
+            <label
+              className="flex cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-200 hover:shadow-sm"
+              style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--card)' }}
+            >
               <Upload className="h-4 w-4" />
               Importar JSON
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleImport}
-              />
+              <input type="file" accept=".json" className="hidden" onChange={handleImport} />
             </label>
             <button
+              onClick={() => setShowBatchImport(true)}
+              className="flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-200 hover:shadow-sm"
+              style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--card)' }}
+            >
+              <FileText className="h-4 w-4" />
+              Importação em Lote
+            </button>
+            <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="btn-glow flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: 'var(--accent-gradient)' }}
             >
               <Plus className="h-4 w-4" />
               Nova Pergunta
@@ -235,100 +296,110 @@ export default function PerguntasPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar perguntas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="h-9 rounded-lg border border-border bg-card px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">Todas categorias</option>
-            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-          <select
-            value={filterDifficulty}
-            onChange={(e) => setFilterDifficulty(e.target.value)}
-            className="h-9 rounded-lg border border-border bg-card px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">Todas dificuldades</option>
-            {Object.entries(DIFFICULTY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="h-9 rounded-lg border border-border bg-card px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">Todos status</option>
-            <option value="active">Ativa</option>
-            <option value="inactive">Inativa</option>
-          </select>
-          {selectedIds.length > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="flex items-center gap-1 rounded-lg bg-destructive px-3 py-2 text-sm text-destructive-foreground hover:bg-destructive/90 transition-colors"
+        <div className="card-base rounded-xl p-4 animate-fade-in" style={{ animationDelay: '60ms', animationFillMode: 'both' }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }} />
+              <input
+                type="text"
+                placeholder="Buscar perguntas..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 w-full rounded-xl border pl-9 pr-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                style={inputStyle}
+              />
+            </div>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="h-9 rounded-xl border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+              style={inputStyle}
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              Excluir ({selectedIds.length})
-            </button>
-          )}
+              <option value="">Todas categorias</option>
+              {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+            <select
+              value={filterDifficulty}
+              onChange={(e) => setFilterDifficulty(e.target.value)}
+              className="h-9 rounded-xl border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+              style={inputStyle}
+            >
+              <option value="">Todas dificuldades</option>
+              {Object.entries(DIFFICULTY_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="h-9 rounded-xl border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+              style={inputStyle}
+            >
+              <option value="">Todos status</option>
+              <option value="active">Ativa</option>
+              <option value="inactive">Inativa</option>
+            </select>
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 rounded-xl bg-destructive px-3.5 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-all"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir ({selectedIds.length})
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Create Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold">Nova Pergunta</h3>
-                <button onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground">
+          <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+            <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl animate-scale-in" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>Nova Pergunta</h3>
+                <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Pergunta *</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Pergunta *</label>
                   <textarea
                     value={formData.question}
                     onChange={(e) => setFormData((p) => ({ ...p, question: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
                     rows={2}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Resposta Correta *</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Resposta Correta *</label>
                   <input
                     value={formData.correctAnswer}
                     onChange={(e) => setFormData((p) => ({ ...p, correctAnswer: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Dica</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Dica</label>
                   <input
                     value={formData.hint}
                     onChange={(e) => setFormData((p) => ({ ...p, hint: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-sm font-medium">Categoria</label>
+                    <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Categoria</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value as QuestionCategory }))}
-                      className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                      style={inputStyle}
                     >
                       {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
@@ -336,11 +407,12 @@ export default function PerguntasPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Dificuldade</label>
+                    <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Dificuldade</label>
                     <select
                       value={formData.difficulty}
                       onChange={(e) => setFormData((p) => ({ ...p, difficulty: e.target.value as Difficulty }))}
-                      className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                      style={inputStyle}
                     >
                       {Object.entries(DIFFICULTY_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
@@ -349,19 +421,20 @@ export default function PerguntasPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Referência Bíblica</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Referência Bíblica</label>
                   <input
                     value={formData.biblicalReference}
                     onChange={(e) => setFormData((p) => ({ ...p, biblicalReference: e.target.value }))}
                     placeholder="ex: João 3:16"
-                    className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Tags</label>
-                  <div className="mt-1 flex flex-wrap gap-1">
+                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Tags</label>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {formData.tags.map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                      <span key={i} className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-0.5 text-xs text-primary font-medium">
                         {tag}
                         <button onClick={() => removeTag('form', i)}><X className="h-3 w-3" /></button>
                       </span>
@@ -374,28 +447,32 @@ export default function PerguntasPage() {
                       if (e.key === 'Enter') { e.preventDefault(); addTag('form', tagInput); }
                     }}
                     placeholder="Pressione Enter para adicionar tag"
-                    className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Observações</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Observações</label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
                     rows={2}
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     onClick={() => setShowForm(false)}
-                    className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted transition-colors"
+                    className="rounded-xl border px-4 py-2.5 text-sm font-medium transition-all hover:bg-[var(--muted)]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleCreate}
-                    className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                    className="btn-glow rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-primary/20"
+                    style={{ background: 'var(--accent-gradient)' }}
                   >
                     Criar Pergunta
                   </button>
@@ -406,148 +483,142 @@ export default function PerguntasPage() {
         )}
 
         {/* Table */}
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="card-base rounded-xl overflow-hidden animate-fade-in" style={{ animationDelay: '120ms', animationFillMode: 'both' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="w-10 px-3 py-3">
+                <tr className="border-b" style={{ borderColor: 'var(--border)', background: 'var(--muted)' }}>
+                  <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selectedIds.length === filtered.length && filtered.length > 0}
-                      onChange={(e) =>
-                        setSelectedIds(e.target.checked ? filtered.map((q) => q.id) : [])
-                      }
+                      onChange={(e) => setSelectedIds(e.target.checked ? filtered.map((q) => q.id) : [])}
                       className="rounded"
                     />
                   </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground cursor-pointer" onClick={() => toggleSort('question')}>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer" style={{ color: 'var(--muted-foreground)' }} onClick={() => toggleSort('question')}>
                     Pergunta <SortIcon field="question" />
                   </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">Resposta</th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground cursor-pointer" onClick={() => toggleSort('category')}>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Resposta</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer" style={{ color: 'var(--muted-foreground)' }} onClick={() => toggleSort('category')}>
                     Categoria <SortIcon field="category" />
                   </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground cursor-pointer" onClick={() => toggleSort('difficulty')}>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer" style={{ color: 'var(--muted-foreground)' }} onClick={() => toggleSort('difficulty')}>
                     Dificuldade <SortIcon field="difficulty" />
                   </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground cursor-pointer" onClick={() => toggleSort('status')}>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer" style={{ color: 'var(--muted-foreground)' }} onClick={() => toggleSort('status')}>
                     Status <SortIcon field="status" />
                   </th>
-                  <th className="px-3 py-3 text-right font-medium text-muted-foreground">Ações</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">
-                      <HelpCircle className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                      <p>Nenhuma pergunta encontrada</p>
-                      <p className="text-xs mt-1">Crie uma nova pergunta ou ajuste os filtros</p>
+                    <td colSpan={7} className="px-4 py-16 text-center" style={{ color: 'var(--muted-foreground)' }}>
+                      <HelpCircle className="mx-auto h-10 w-10 mb-3 opacity-30" />
+                      <p className="font-medium">Nenhuma pergunta encontrada</p>
+                      <p className="text-xs mt-1 opacity-60">Crie uma nova pergunta ou ajuste os filtros</p>
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((q) => (
-                    <tr key={q.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-3 py-3">
+                  filtered.map((q, i) => (
+                    <tr
+                      key={q.id}
+                      className="border-b transition-colors hover:bg-[var(--muted)]/50"
+                      style={{ borderColor: 'var(--border)' }}
+                    >
+                      <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(q.id)}
                           onChange={(e) =>
                             setSelectedIds((prev) =>
-                              e.target.checked
-                                ? [...prev, q.id]
-                                : prev.filter((id) => id !== q.id)
+                              e.target.checked ? [...prev, q.id] : prev.filter((id) => id !== q.id)
                             )
                           }
                           className="rounded"
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         {editingId === q.id ? (
                           <input
                             value={editForm.question || ''}
                             onChange={(e) => setEditForm((p) => ({ ...p, question: e.target.value }))}
-                            className="w-full rounded border border-border bg-muted/50 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full rounded-lg border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+                            style={inputStyle}
                           />
                         ) : (
                           <div>
-                            <p className="font-medium text-foreground line-clamp-1">{q.question}</p>
+                            <p className="font-medium line-clamp-1" style={{ color: 'var(--foreground)' }}>{q.question}</p>
                             {q.biblicalReference && (
-                              <p className="text-xs text-muted-foreground">{q.biblicalReference}</p>
+                              <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{q.biblicalReference}</p>
                             )}
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         {editingId === q.id ? (
                           <input
                             value={editForm.correctAnswer || ''}
                             onChange={(e) => setEditForm((p) => ({ ...p, correctAnswer: e.target.value }))}
-                            className="w-full rounded border border-border bg-muted/50 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full rounded-lg border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+                            style={inputStyle}
                           />
                         ) : (
-                          <span className="text-muted-foreground line-clamp-1">{q.correctAnswer}</span>
+                          <span className="line-clamp-1" style={{ color: 'var(--muted-foreground)' }}>{q.correctAnswer}</span>
                         )}
                       </td>
-                      <td className="px-3 py-3">
-                        <span className="inline-flex rounded-md bg-muted px-2 py-0.5 text-xs">
+                      <td className="px-4 py-3">
+                        <span className="inline-flex rounded-lg px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--muted)', color: 'var(--muted-foreground)' }}>
                           {CATEGORY_LABELS[q.category]}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         <span
-                          className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
+                          className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${
                             q.difficulty === 'facil'
-                              ? 'bg-emerald-500/10 text-emerald-500'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                               : q.difficulty === 'medio'
-                              ? 'bg-amber-500/10 text-amber-500'
-                              : 'bg-red-500/10 text-red-500'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                              : 'bg-red-500/10 text-red-600 dark:text-red-400'
                           }`}
                         >
                           {DIFFICULTY_LABELS[q.difficulty]}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs ${
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
                             q.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-500'
-                              : 'bg-muted text-muted-foreground'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              : ''
                           }`}
+                          style={q.status !== 'active' ? { background: 'var(--muted)', color: 'var(--muted-foreground)' } : undefined}
                         >
                           {q.status === 'active' ? 'Ativa' : 'Inativa'}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           {editingId === q.id ? (
                             <>
-                              <button onClick={handleUpdate} className="rounded p-1 hover:bg-emerald-500/10 text-emerald-500">
+                              <button onClick={handleUpdate} className="rounded-lg p-1.5 hover:bg-emerald-500/10 text-emerald-500 transition-colors">
                                 <Check className="h-4 w-4" />
                               </button>
-                              <button onClick={() => { setEditingId(null); setEditForm({}); }} className="rounded p-1 hover:bg-muted text-muted-foreground">
+                              <button onClick={() => { setEditingId(null); setEditForm({}); }} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
                                 <X className="h-4 w-4" />
                               </button>
                             </>
                           ) : (
                             <>
-                              <button
-                                onClick={() => { setEditingId(q.id); setEditForm(q); }}
-                                className="rounded p-1 hover:bg-muted text-muted-foreground hover:text-foreground"
-                              >
+                              <button onClick={() => { setEditingId(q.id); setEditForm(q); }} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
                                 <Edit3 className="h-3.5 w-3.5" />
                               </button>
-                              <button
-                                onClick={() => handleDuplicate(q)}
-                                className="rounded p-1 hover:bg-muted text-muted-foreground hover:text-foreground"
-                              >
+                              <button onClick={() => handleDuplicate(q)} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
                                 <Copy className="h-3.5 w-3.5" />
                               </button>
-                              <button
-                                onClick={() => handleDelete(q.id)}
-                                className="rounded p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                              >
+                              <button onClick={() => handleDelete(q.id)} className="rounded-lg p-1.5 hover:bg-destructive/10 transition-colors" style={{ color: 'var(--muted-foreground)' }}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </>
@@ -561,17 +632,66 @@ export default function PerguntasPage() {
             </table>
           </div>
         </div>
+
+        {/* Batch Import Modal */}
+        {showBatchImport && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+            <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl animate-scale-in" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" style={{ color: 'var(--primary)' }} />
+                  <h3 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>Importação em Lote</h3>
+                </div>
+                <button onClick={() => { setShowBatchImport(false); setBatchText(''); setBatchPreview([]); }} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs mb-2" style={{ color: 'var(--muted-foreground)' }}>
+                    Formato: <code className="rounded bg-[var(--muted)] px-1">Pergunta | Resposta | Categoria | Dificuldade</code> (uma por linha). Categoria e dificuldade são opcionais — o sistema auto-detecta.
+                  </p>
+                  <textarea
+                    value={batchText}
+                    onChange={(e) => setBatchText(e.target.value)}
+                    placeholder={`Quem é o pai de Abraão? | Terá\nQual é o maior mandamento? | Amar a Deus\nde tudo o seu coração | novo_testamento | facil`}
+                    className="w-full rounded-xl border px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
+                    style={inputStyle}
+                    rows={8}
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <button onClick={parseBatchText} disabled={!batchText.trim()} className="flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all hover:shadow-sm disabled:opacity-50" style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--card)' }}>
+                    <Wand2 className="h-4 w-4" /> Analisar e Auto-detectar
+                  </button>
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{batchPreview.length} pergunta(s) encontrada(s)</span>
+                </div>
+                {batchPreview.length > 0 && (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {batchPreview.map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{item.question}</p>
+                          <p className="text-xs truncate" style={{ color: 'var(--muted-foreground)' }}>{item.answer}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.autoDetected && <Wand2 className="h-3 w-3 text-amber-500" />}
+                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{CATEGORY_LABELS[item.category] || item.category}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.difficulty === 'facil' ? 'bg-emerald-500/10 text-emerald-600' : item.difficulty === 'dificil' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'}`}>{DIFFICULTY_LABELS[item.difficulty]}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => { setShowBatchImport(false); setBatchText(''); setBatchPreview([]); }} className="rounded-xl border px-4 py-2.5 text-sm font-medium transition-all hover:bg-[var(--muted)]" style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>Cancelar</button>
+                  <button onClick={handleBatchImport} disabled={batchPreview.length === 0} className="btn-glow rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50" style={{ background: 'var(--accent-gradient)' }}>Importar {batchPreview.length} Pergunta(s)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
-  );
-}
-
-function HelpCircle(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
-    </svg>
   );
 }
