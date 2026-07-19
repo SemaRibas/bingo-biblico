@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import type { BibleQuestion, QuestionCategory, Difficulty } from '@/types';
 import { generateId, CATEGORY_LABELS, DIFFICULTY_LABELS } from '@/lib/utils';
@@ -257,7 +257,7 @@ export default function PerguntasPage() {
   };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between animate-fade-in">
@@ -692,6 +692,6 @@ export default function PerguntasPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    
   );
 }

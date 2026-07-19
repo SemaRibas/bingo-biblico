@@ -20,21 +20,19 @@ import {
   Trophy,
   Star,
   Gamepad2,
-  UserPlus,
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, accent: 'from-violet-500 to-purple-600' },
-  { name: 'Banco de Perguntas', href: '/perguntas', icon: HelpCircle, accent: 'from-blue-500 to-cyan-500' },
-  { name: 'Cartelas de Bingo', href: '/cartelas', icon: LayoutGrid, accent: 'from-emerald-500 to-teal-500' },
-  { name: 'Mapeamento', href: '/mapeamento', icon: ArrowLeftRight, accent: 'from-orange-500 to-amber-500' },
-  { name: 'Envelopes Surpresa', href: '/envelopes', icon: Mail, accent: 'from-pink-500 to-rose-500' },
-  { name: 'Raridades', href: '/raridades', icon: Sparkles, accent: 'from-yellow-400 to-amber-500' },
-  { name: 'Simulador', href: '/simulador', icon: Play, accent: 'from-indigo-500 to-violet-500' },
-  { name: 'Exportação', href: '/exportacao', icon: Printer, accent: 'from-slate-500 to-zinc-500' },
-  { name: 'Configurações', href: '/configuracoes', icon: Settings, accent: 'from-gray-500 to-slate-500' },
-  { name: 'Painel do Host', href: '/jogo', icon: Gamepad2, accent: 'from-red-500 to-pink-500' },
-  { name: 'Jogar', href: '/jogar', icon: UserPlus, accent: 'from-cyan-500 to-blue-500' },
+  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, accent: 'from-violet-500 to-purple-600' },
+  { name: 'Banco de Perguntas', href: '/admin/perguntas', icon: HelpCircle, accent: 'from-blue-500 to-cyan-500' },
+  { name: 'Cartelas de Bingo', href: '/admin/cartelas', icon: LayoutGrid, accent: 'from-emerald-500 to-teal-500' },
+  { name: 'Mapeamento', href: '/admin/mapeamento', icon: ArrowLeftRight, accent: 'from-orange-500 to-amber-500' },
+  { name: 'Envelopes Surpresa', href: '/admin/envelopes', icon: Mail, accent: 'from-pink-500 to-rose-500' },
+  { name: 'Raridades', href: '/admin/raridades', icon: Sparkles, accent: 'from-yellow-400 to-amber-500' },
+  { name: 'Simulador', href: '/admin/simulador', icon: Play, accent: 'from-indigo-500 to-violet-500' },
+  { name: 'Exportação', href: '/admin/exportacao', icon: Printer, accent: 'from-slate-500 to-zinc-500' },
+  { name: 'Configurações', href: '/admin/configuracoes', icon: Settings, accent: 'from-gray-500 to-slate-500' },
+  { name: 'Painel do Host', href: '/admin/jogo', icon: Gamepad2, accent: 'from-red-500 to-pink-500' },
 ];
 
 export function Sidebar() {

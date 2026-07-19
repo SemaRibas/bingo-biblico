@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import type { Envelope, RewardType } from '@/types';
 import { generateId, REWARD_TYPE_LABELS } from '@/lib/utils';
@@ -62,7 +62,7 @@ export default function EnvelopesPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="flex items-center justify-between animate-fade-in">
           <div>
@@ -199,6 +199,6 @@ export default function EnvelopesPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    
   );
 }

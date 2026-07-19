@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import { useTheme } from 'next-themes';
 import { Settings, Palette, Bell, Shield, Database, Save } from 'lucide-react';
@@ -32,7 +32,7 @@ export default function ConfiguracoesPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="animate-fade-in">
           <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Configurações</h2>
@@ -128,6 +128,6 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+    
   );
 }

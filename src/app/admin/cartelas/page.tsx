@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import type { BingoCard, BingoCell, BingoSize } from '@/types';
 import { generateId, CATEGORY_LABELS, DIFFICULTY_LABELS } from '@/lib/utils';
@@ -149,7 +149,7 @@ export default function CartelasPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="flex items-center justify-between animate-fade-in">
           <div>
@@ -391,6 +391,6 @@ export default function CartelasPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    
   );
 }

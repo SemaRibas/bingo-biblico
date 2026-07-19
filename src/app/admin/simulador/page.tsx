@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import { Sparkles } from 'lucide-react';
 import type { RewardType } from '@/types';
@@ -60,7 +60,7 @@ export default function SimuladorPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="animate-fade-in">
           <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Simulador</h2>
@@ -152,6 +152,6 @@ export default function SimuladorPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    
   );
 }

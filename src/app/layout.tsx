@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppProvider } from "@/contexts/AppContext";
 import { Providers } from "@/components/Providers";
-import { SidebarProvider } from "@/components/layout/SidebarContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bingo Bíblico - Gerenciamento",
-  description: "Sistema de gerenciamento de Bingo Bíblico + Envelope Surpresa",
+  title: "Bingo Bíblico",
+  description: "Sistema de Bingo Bíblico + Envelope Surpresa",
 };
 
 export default function RootLayout({
@@ -33,9 +31,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <Providers>
-          <SidebarProvider>
-            <AppProvider>{children}</AppProvider>
-          </SidebarProvider>
+          {children}
         </Providers>
       </body>
     </html>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import { Download, FileText, Printer, Loader2 } from 'lucide-react';
 
@@ -21,7 +21,7 @@ export default function ExportacaoPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="animate-fade-in">
           <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Exportação</h2>
@@ -61,6 +61,6 @@ export default function ExportacaoPage() {
           <p className="mt-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>Selecione um envelope para exportar</p>
         </div>
       </div>
-    </AppLayout>
+    
   );
 }

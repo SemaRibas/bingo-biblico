@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import { CheckCircle, ArrowRightCircle, AlertTriangle, List, Table as TableIcon, Layers } from 'lucide-react';
 
@@ -48,7 +48,7 @@ export default function MapeamentoPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="animate-fade-in">
           <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Mapeamento de Raridades</h2>
@@ -146,6 +146,6 @@ export default function MapeamentoPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    
   );
 }

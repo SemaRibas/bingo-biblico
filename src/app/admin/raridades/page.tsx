@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { useApp } from '@/contexts/AppContext';
 import type { Rarity, RarityDistribution, RewardType } from '@/types';
 import { generateId, REWARD_TYPE_LABELS, DEFAULT_RARITY_PRESETS } from '@/lib/utils';
@@ -77,7 +77,7 @@ export default function RaridadesPage() {
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };
 
   return (
-    <AppLayout>
+    
       <div className="space-y-6">
         <div className="flex items-center justify-between animate-fade-in">
           <div>
@@ -210,6 +210,6 @@ export default function RaridadesPage() {
           </div>
         )}
       </div>
-    </AppLayout>
+    
   );
 }
