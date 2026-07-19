@@ -357,64 +357,100 @@ export default function PerguntasPage() {
 
         {/* Create Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-            <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl animate-scale-in" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>Nova Pergunta</h3>
-                <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
-                  <X className="h-4 w-4" />
-                </button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center animate-modal-backdrop" style={{ background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(8px)' }}>
+            <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border shadow-2xl animate-modal-content" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+              {/* Header */}
+              <div className="sticky top-0 z-10 px-6 py-5 border-b" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--accent-gradient)' }}>
+                      <Plus className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>Nova Pergunta</h3>
+                      <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Preencha os dados da pergunta bíblica</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-[var(--muted)]"
+                    style={{ color: 'var(--muted-foreground)' }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Pergunta *</label>
+
+              {/* Form Body */}
+              <div className="px-6 py-5 space-y-5">
+                {/* Question */}
+                <div className="space-y-2 animate-slide-up stagger-1">
+                  <label className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                    <HelpCircle className="h-3.5 w-3.5" style={{ color: 'var(--primary)' }} />
+                    Pergunta *
+                  </label>
                   <textarea
                     value={formData.question}
                     onChange={(e) => setFormData((p) => ({ ...p, question: e.target.value }))}
-                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    placeholder="Digite a pergunta bíblica..."
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm resize-none transition-all duration-200 hover:border-[var(--primary)]/30"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     rows={2}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Resposta Correta *</label>
+
+                {/* Answer */}
+                <div className="space-y-2 animate-slide-up stagger-2">
+                  <label className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                    <Check className="h-3.5 w-3.5" style={{ color: '#10b981' }} />
+                    Resposta Correta *
+                  </label>
                   <input
                     value={formData.correctAnswer}
                     onChange={(e) => setFormData((p) => ({ ...p, correctAnswer: e.target.value }))}
-                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    placeholder="Digite a resposta correta..."
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 hover:border-[var(--primary)]/30"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Dica</label>
+
+                {/* Hint */}
+                <div className="space-y-2 animate-slide-up stagger-3">
+                  <label className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                    <FileText className="h-3.5 w-3.5" style={{ color: 'var(--muted-foreground)' }} />
+                    Dica
+                  </label>
                   <input
                     value={formData.hint}
                     onChange={(e) => setFormData((p) => ({ ...p, hint: e.target.value }))}
-                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    placeholder="Dica opcional para a pergunta..."
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 hover:border-[var(--primary)]/30"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+
+                {/* Category & Difficulty */}
+                <div className="grid grid-cols-2 gap-4 animate-slide-up stagger-4">
+                  <div className="space-y-2">
                     <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Categoria</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value as QuestionCategory }))}
-                      className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                      style={inputStyle}
+                      className="field-focus w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 hover:border-[var(--primary)]/30 appearance-none cursor-pointer"
+                      style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     >
                       {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Dificuldade</label>
                     <select
                       value={formData.difficulty}
                       onChange={(e) => setFormData((p) => ({ ...p, difficulty: e.target.value as Difficulty }))}
-                      className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                      style={inputStyle}
+                      className="field-focus w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 hover:border-[var(--primary)]/30 appearance-none cursor-pointer"
+                      style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     >
                       {Object.entries(DIFFICULTY_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
@@ -422,23 +458,33 @@ export default function PerguntasPage() {
                     </select>
                   </div>
                 </div>
-                <div>
+
+                {/* Biblical Reference */}
+                <div className="space-y-2 animate-slide-up stagger-5">
                   <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Referência Bíblica</label>
                   <input
                     value={formData.biblicalReference}
                     onChange={(e) => setFormData((p) => ({ ...p, biblicalReference: e.target.value }))}
                     placeholder="ex: João 3:16"
-                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 hover:border-[var(--primary)]/30"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   />
                 </div>
-                <div>
+
+                {/* Tags */}
+                <div className="space-y-2 animate-slide-up stagger-5">
                   <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Tags</label>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
                     {formData.tags.map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-0.5 text-xs text-primary font-medium">
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-medium transition-all duration-200 hover:scale-105"
+                        style={{ background: 'var(--primary)', color: 'var(--primary-foreground)', opacity: 0.9 }}
+                      >
                         {tag}
-                        <button onClick={() => removeTag('form', i)}><X className="h-3 w-3" /></button>
+                        <button onClick={() => removeTag('form', i)} className="ml-0.5 hover:opacity-70 transition-opacity">
+                          <X className="h-3 w-3" />
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -449,36 +495,41 @@ export default function PerguntasPage() {
                       if (e.key === 'Enter') { e.preventDefault(); addTag('form', tagInput); }
                     }}
                     placeholder="Pressione Enter para adicionar tag"
-                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 hover:border-[var(--primary)]/30"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   />
                 </div>
-                <div>
+
+                {/* Notes */}
+                <div className="space-y-2 animate-slide-up stagger-6">
                   <label className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>Observações</label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
-                    className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    placeholder="Notas adicionais..."
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm resize-none transition-all duration-200 hover:border-[var(--primary)]/30"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     rows={2}
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    onClick={() => setShowForm(false)}
-                    className="rounded-xl border px-4 py-2.5 text-sm font-medium transition-all hover:bg-[var(--muted)]"
-                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleCreate}
-                    className="btn-glow rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-primary/20"
-                    style={{ background: 'var(--accent-gradient)' }}
-                  >
-                    Criar Pergunta
-                  </button>
-                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 px-6 py-4 border-t flex justify-end gap-3" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="px-5 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 hover:bg-[var(--muted)] hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreate}
+                  className="btn-glow px-6 py-2.5 rounded-2xl text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ background: 'var(--accent-gradient)' }}
+                >
+                  Criar Pergunta
+                </button>
               </div>
             </div>
           </div>
@@ -637,58 +688,104 @@ export default function PerguntasPage() {
 
         {/* Batch Import Modal */}
         {showBatchImport && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-            <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl animate-scale-in" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" style={{ color: 'var(--primary)' }} />
-                  <h3 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>Importação em Lote</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center animate-modal-backdrop" style={{ background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(8px)' }}>
+            <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border shadow-2xl animate-modal-content" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+              {/* Header */}
+              <div className="sticky top-0 z-10 px-6 py-5 border-b" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'var(--accent-gradient)' }}>
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>Importação em Lote</h3>
+                      <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Importe várias perguntas de uma vez</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setShowBatchImport(false); setBatchText(''); setBatchPreview([]); }}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-[var(--muted)]"
+                    style={{ color: 'var(--muted-foreground)' }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <button onClick={() => { setShowBatchImport(false); setBatchText(''); setBatchPreview([]); }} className="rounded-lg p-1.5 hover:bg-[var(--muted)] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
-                  <X className="h-4 w-4" />
-                </button>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs mb-2" style={{ color: 'var(--muted-foreground)' }}>
-                    Formato: <code className="rounded bg-[var(--muted)] px-1">Pergunta | Resposta | Categoria | Dificuldade</code> (uma por linha). Categoria e dificuldade são opcionais — o sistema auto-detecta.
+
+              {/* Body */}
+              <div className="px-6 py-5 space-y-5">
+                <div className="animate-slide-up stagger-1">
+                  <p className="text-xs mb-3" style={{ color: 'var(--muted-foreground)' }}>
+                    Formato: <code className="rounded-xl bg-[var(--muted)] px-2 py-0.5 text-[11px]">Pergunta | Resposta | Categoria | Dificuldade</code> (uma por linha). Categoria e dificuldade são opcionais.
                   </p>
                   <textarea
                     value={batchText}
                     onChange={(e) => setBatchText(e.target.value)}
                     placeholder={`Quem é o pai de Abraão? | Terá\nQual é o maior mandamento? | Amar a Deus\nde tudo o seu coração | novo_testamento | facil`}
-                    className="w-full rounded-xl border px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/20"
-                    style={inputStyle}
+                    className="field-focus w-full rounded-2xl border px-4 py-3 text-sm font-mono transition-all duration-200 hover:border-[var(--primary)]/30 resize-none"
+                    style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     rows={8}
                   />
                 </div>
-                <div className="flex justify-between items-center">
-                  <button onClick={parseBatchText} disabled={!batchText.trim()} className="flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all hover:shadow-sm disabled:opacity-50" style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--card)' }}>
+
+                <div className="flex justify-between items-center animate-slide-up stagger-2">
+                  <button
+                    onClick={parseBatchText}
+                    disabled={!batchText.trim()}
+                    className="flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:shadow-sm disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--card)' }}
+                  >
                     <Wand2 className="h-4 w-4" /> Analisar e Auto-detectar
                   </button>
-                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{batchPreview.length} pergunta(s) encontrada(s)</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>
+                    {batchPreview.length} pergunta(s) encontrada(s)
+                  </span>
                 </div>
+
                 {batchPreview.length > 0 && (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <div className="space-y-2 max-h-60 overflow-y-auto animate-slide-up stagger-3">
                     {batchPreview.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--border)' }}>
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 rounded-2xl border p-3.5 transition-all duration-200 hover:shadow-sm"
+                        style={{ borderColor: 'var(--border)', background: 'var(--muted)' }}
+                      >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{item.question}</p>
                           <p className="text-xs truncate" style={{ color: 'var(--muted-foreground)' }}>{item.answer}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {item.autoDetected && <Wand2 className="h-3 w-3 text-amber-500" />}
-                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{CATEGORY_LABELS[item.category] || item.category}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.difficulty === 'facil' ? 'bg-emerald-500/10 text-emerald-600' : item.difficulty === 'dificil' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'}`}>{DIFFICULTY_LABELS[item.difficulty]}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-lg font-medium" style={{ background: 'var(--card)', color: 'var(--muted-foreground)' }}>
+                            {CATEGORY_LABELS[item.category] || item.category}
+                          </span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${item.difficulty === 'facil' ? 'bg-emerald-500/10 text-emerald-600' : item.difficulty === 'dificil' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                            {DIFFICULTY_LABELS[item.difficulty]}
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="flex justify-end gap-2 pt-2">
-                  <button onClick={() => { setShowBatchImport(false); setBatchText(''); setBatchPreview([]); }} className="rounded-xl border px-4 py-2.5 text-sm font-medium transition-all hover:bg-[var(--muted)]" style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>Cancelar</button>
-                  <button onClick={handleBatchImport} disabled={batchPreview.length === 0} className="btn-glow rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50" style={{ background: 'var(--accent-gradient)' }}>Importar {batchPreview.length} Pergunta(s)</button>
-                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 px-6 py-4 border-t flex justify-end gap-3" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+                <button
+                  onClick={() => { setShowBatchImport(false); setBatchText(''); setBatchPreview([]); }}
+                  className="px-5 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200 hover:bg-[var(--muted)] hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleBatchImport}
+                  disabled={batchPreview.length === 0}
+                  className="btn-glow px-6 py-2.5 rounded-2xl text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: 'var(--accent-gradient)' }}
+                >
+                  Importar {batchPreview.length} Pergunta(s)
+                </button>
               </div>
             </div>
           </div>
