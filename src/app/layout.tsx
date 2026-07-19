@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bingo Bíblico",
   description: "Sistema de Bingo Bíblico + Envelope Surpresa",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
