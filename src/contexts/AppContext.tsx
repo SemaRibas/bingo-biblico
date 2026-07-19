@@ -61,6 +61,7 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         projects: state.projects.filter((p) => p.id !== action.payload),
+        currentProject: state.currentProject?.id === action.payload ? null : state.currentProject,
       };
     case 'SET_QUESTIONS':
       return { ...state, questions: action.payload };
