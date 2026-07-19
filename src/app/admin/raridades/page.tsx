@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import type { Rarity, RarityDistribution, RewardType } from '@/types';
 import { generateId, REWARD_TYPE_LABELS, DEFAULT_RARITY_PRESETS } from '@/lib/utils';
 import { Plus, Trash2, Sparkles, Eye, X, Copy, Edit3 } from 'lucide-react';
@@ -39,6 +40,7 @@ function EnvelopePreview({ rarity }: { rarity: Partial<Rarity> }) {
 
 export default function RaridadesPage() {
   const { state, dispatch, projectId } = useApp();
+  const { confirm } = useNotification();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(EMPTY_RARITY);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function RaridadesPage() {
     setShowForm(false);
   };
 
-  const handleDelete = (id: string) => { if (!confirm('Excluir esta raridade?')) return; dispatch({ type: 'DELETE_RARITY', payload: id }); };
+  const handleDelete = async (id: string) => { if (!await confirm({ title: 'Excluir raridade', message: 'Tem certeza que deseja excluir esta raridade?', variant: 'danger' })) return; dispatch({ type: 'DELETE_RARITY', payload: id }); };
   const handleDuplicate = (r: Rarity) => { const now = new Date().toISOString(); dispatch({ type: 'ADD_RARITY', payload: { ...r, id: generateId(), name: `${r.name} (Cópia)`, createdAt: now, updatedAt: now } }); };
   const applyPreset = (preset: (typeof DEFAULT_RARITY_PRESETS)[0]) => { setFormData((prev) => ({ ...prev, name: preset.name, slug: preset.slug, color: preset.color, glowIntensity: preset.glowIntensity, particleIntensity: preset.particleIntensity, animationSpeed: preset.animationSpeed, particleSize: preset.particleSize, opacity: preset.opacity })); };
   const updateDistribution = (index: number, field: keyof RarityDistribution, value: string | number) => { setFormData((prev) => { const dists = [...prev.distributions]; dists[index] = { ...dists[index], [field]: value }; return { ...prev, distributions: dists }; }); };

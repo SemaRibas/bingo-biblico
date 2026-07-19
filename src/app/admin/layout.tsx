@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useSidebar } from '@/components/layout/SidebarContext';
 import { AppProvider } from '@/contexts/AppContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { SidebarProvider } from '@/components/layout/SidebarContext';
 
 export default function AdminLayout({
@@ -15,7 +16,9 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
       <AppProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
+        <NotificationProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </NotificationProvider>
       </AppProvider>
     </SidebarProvider>
   );

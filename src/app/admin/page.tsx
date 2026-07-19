@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import type { Project } from '@/types';
 import {
   HelpCircle,
@@ -20,6 +21,7 @@ import { REWARD_TYPE_LABELS } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
   const { state, dispatch } = useApp();
+  const { confirm } = useNotification();
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: '', description: '' });
 
@@ -303,9 +305,9 @@ export default function AdminDashboardPage() {
                               <Edit3 className="h-3.5 w-3.5" />
                             </button>
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                if (confirm(`Excluir permanentemente o projeto "${project.name}"? Esta ação não pode ser desfeita.`)) {
+                                if (await confirm({ title: 'Excluir projeto', message: `Excluir permanentemente o projeto "${project.name}"? Esta ação não pode ser desfeita.`, variant: 'danger' })) {
                                   dispatch({ type: 'DELETE_PROJECT', payload: project.id });
                                 }
                               }}

@@ -3,10 +3,12 @@
 import React, { useState, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import { Download, FileText, Printer, Loader2 } from 'lucide-react';
 
 export default function ExportacaoPage() {
   const { state } = useApp();
+  const { toast } = useNotification();
   const [selectedEnvelopeId, setSelectedEnvelopeId] = useState('');
   const [exportFormat, setExportFormat] = useState<'pdf' | 'png'>('pdf');
   const [isExporting, setIsExporting] = useState(false);
@@ -15,7 +17,7 @@ export default function ExportacaoPage() {
 
   const handleExport = () => {
     setIsExporting(true);
-    setTimeout(() => { setIsExporting(false); alert('Exportação simulada concluída!'); }, 2000);
+    setTimeout(() => { setIsExporting(false); toast({ type: 'success', title: 'Exportação concluída' }); }, 2000);
   };
 
   const inputStyle = { background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' };

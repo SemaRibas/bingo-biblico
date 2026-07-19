@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import type { BingoCard, BingoCell, BingoSize } from '@/types';
 import { generateId, CATEGORY_LABELS, DIFFICULTY_LABELS } from '@/lib/utils';
 import {
@@ -60,6 +61,7 @@ function fillCardAutomatically(
 
 export default function CartelasPage() {
   const { state, dispatch, projectId } = useApp();
+  const { toast, confirm } = useNotification();
   const [showGenerator, setShowGenerator] = useState(false);
   const [genSize, setGenSize] = useState<BingoSize>(5);
   const [genCount, setGenCount] = useState(1);
@@ -77,7 +79,7 @@ export default function CartelasPage() {
     const freeCells = genSize === 5 ? 1 : 0;
     const neededCells = totalCells - freeCells;
     if (projectQuestions.length < neededCells) {
-      alert(`Perguntas insuficientes. Necessárias: ${neededCells}, disponíveis: ${projectQuestions.length}`);
+      toast({ type: 'warning', title: 'Perguntas insuficientes', message: `Necessárias: ${neededCells}, disponíveis: ${projectQuestions.length}` });
       return;
     }
     const newCards: BingoCard[] = [];
@@ -92,8 +94,8 @@ export default function CartelasPage() {
     setGenName('');
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Excluir esta cartela?')) return;
+  const handleDelete = async (id: string) => {
+    if (!await confirm({ title: 'Excluir cartela', message: 'Tem certeza que deseja excluir esta cartela?', variant: 'danger' })) return;
     dispatch({ type: 'DELETE_CARD', payload: id });
   };
 

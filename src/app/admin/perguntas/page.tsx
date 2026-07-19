@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import type { BibleQuestion, QuestionCategory, Difficulty } from '@/types';
 import { generateId, CATEGORY_LABELS, DIFFICULTY_LABELS } from '@/lib/utils';
 import {
@@ -34,6 +35,7 @@ const EMPTY_QUESTION: Omit<BibleQuestion, 'id' | 'createdAt' | 'updatedAt' | 'li
 
 export default function PerguntasPage() {
   const { state, dispatch, projectId } = useApp();
+  const { toast, confirm } = useNotification();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterDifficulty, setFilterDifficulty] = useState<string>('');
@@ -102,8 +104,8 @@ export default function PerguntasPage() {
     setEditForm({});
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Excluir esta pergunta?')) return;
+  const handleDelete = async (id: string) => {
+    if (!await confirm({ title: 'Excluir pergunta', message: 'Tem certeza que deseja excluir esta pergunta?', variant: 'danger' })) return;
     dispatch({ type: 'DELETE_QUESTION', payload: id });
   };
 
@@ -120,8 +122,8 @@ export default function PerguntasPage() {
     dispatch({ type: 'ADD_QUESTION', payload: dup });
   };
 
-  const handleBulkDelete = () => {
-    if (!confirm(`Excluir ${selectedIds.length} pergunta(s)?`)) return;
+  const handleBulkDelete = async () => {
+    if (!await confirm({ title: 'Excluir perguntas', message: `Tem certeza que deseja excluir ${selectedIds.length} pergunta(s)?`, variant: 'danger' })) return;
     selectedIds.forEach((id) => dispatch({ type: 'DELETE_QUESTION', payload: id }));
     setSelectedIds([]);
   };
@@ -154,7 +156,7 @@ export default function PerguntasPage() {
           dispatch({ type: 'ADD_QUESTION', payload: q });
         });
       } catch {
-        alert('Erro ao importar arquivo JSON');
+        toast({ type: 'error', title: 'Erro ao importar', message: 'Arquivo JSON inválido' });
       }
     };
     reader.readAsText(file);

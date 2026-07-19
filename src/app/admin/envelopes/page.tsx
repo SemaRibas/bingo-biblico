@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import type { Envelope, RewardType } from '@/types';
 import { generateId, REWARD_TYPE_LABELS } from '@/lib/utils';
 import {
@@ -19,6 +20,7 @@ import {
 
 export default function EnvelopesPage() {
   const { state, dispatch, projectId } = useApp();
+  const { confirm } = useNotification();
   const [showForm, setShowForm] = useState(false);
   const [showBatch, setShowBatch] = useState(false);
   const [filterRarity, setFilterRarity] = useState('');
@@ -53,7 +55,7 @@ export default function EnvelopesPage() {
     setShowBatch(false);
   };
 
-  const handleDelete = (id: string) => { if (!confirm('Excluir este envelope?')) return; dispatch({ type: 'DELETE_ENVELOPE', payload: id }); };
+  const handleDelete = async (id: string) => { if (!await confirm({ title: 'Excluir envelope', message: 'Tem certeza que deseja excluir este envelope?', variant: 'danger' })) return; dispatch({ type: 'DELETE_ENVELOPE', payload: id }); };
   const handleDuplicate = (env: Envelope) => { dispatch({ type: 'ADD_ENVELOPE', payload: { ...env, id: generateId(), name: `${env.name} (Cópia)`, code: `${env.code}-COPY`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }); };
   const handleStatusChange = (id: string, status: Envelope['status']) => { const env = state.envelopes.find((e) => e.id === id); if (!env) return; dispatch({ type: 'UPDATE_ENVELOPE', payload: { ...env, status, updatedAt: new Date().toISOString() } }); };
   const getRarityName = (rarityId: string) => state.rarities.find((r) => r.id === rarityId)?.name || 'Sem raridade';
